@@ -42,15 +42,22 @@ st.divider()
 
 def search_school(keyword):
     try:
-        url = f"[https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=](https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=){urllib.parse.quote(keyword)}"
+        url = f"https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM={urllib.parse.quote(keyword)}"
         if NEIS_API_KEY and NEIS_API_KEY != "여기에_NEIS_API_KEY를_입력하세요": 
             url += f"&KEY={NEIS_API_KEY}"
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode("utf-8"))
+            
+        # 검색 결과가 없는 경우(200번대 상태코드나 데이터 없음)
+        if "schoolInfo" not in data:
+            print(f"검색 결과 없음: {data}")
+            return []
+            
         rows = data["schoolInfo"][1]["row"]
         return [{"name": r["SCHUL_NM"], "region": r["ATPT_OFCDC_SC_NM"], "edu_code": r["ATPT_OFCDC_SC_CODE"], "school_code": r["SD_SCHUL_CODE"]} for r in rows]
-    except: 
+    except Exception as e:
+        print(f"에러 발생: {e}") # 여기서 왜 안 되는지 터미널에서 확인 가능
         return []
 
 def get_meal(edu_code, school_code, meal_date):
