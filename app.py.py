@@ -302,34 +302,43 @@ with st.sidebar:
             placeholder="예) 서현중학교"
         )
 
-        selected_school = None
+        # 1. 학교 검색을 위한 세션 상태 초기화
+        if "search_clicked" not in st.session_state:
+            st.session_state.search_clicked = False
+        if "school_options" not in st.session_state:
+            st.session_state.school_options = []
+        if "school_data_list" not in st.session_state:
+            st.session_state.school_data_list = []
 
-        school_list = []
-
-        if school_keyword:
-
-            school_list = search_school(school_keyword)
-
-            if school_list:
-
-                options = [
-                    f"{s['name']} ({s['region']})"
-                    for s in school_list
-                ]
-
-                selected = st.selectbox(
-                    "학교 선택",
-                    options
-                )
-
-                index = options.index(selected)
-
-                selected_school = school_list[index]
-
+        # 2. 검색 버튼 추가
+        if st.button("🔍 학교 검색", use_container_width=True):
+            if school_keyword:
+                with st.spinner("학교를 검색하는 중..."):
+                    school_list = search_school(school_keyword)
+                    if school_list:
+                        st.session_state.school_data_list = school_list
+                        st.session_state.school_options = [
+                            f"{s['name']} ({s['region']})" for s in school_list
+                        ]
+                        st.session_state.search_clicked = True
+                    else:
+                        st.error("검색된 학교가 없습니다. 정확한 이름을 입력해 주세요.")
+                        st.session_state.search_clicked = False
+                        st.session_state.school_options = []
             else:
+                st.warning("학교 이름을 입력해 주세요.")
 
-                st.warning("검색된 학교가 없습니다.")
+        # 3. 검색 성공 시에만 드롭다운 노출
+        selected_school = None
+        if st.session_state.search_clicked and st.session_state.school_options:
+            selected = st.selectbox(
+                "학교 선택",
+                st.session_state.school_options
+            )
+            index = st.session_state.school_options.index(selected)
+            selected_school = st.session_state.school_data_list[index]
 
+        # 4. 급식 날짜 기본값을 오늘 날짜로 세팅
         meal_date = st.date_input(
             "급식 날짜",
             datetime.date.today()
@@ -343,11 +352,10 @@ with st.sidebar:
     # -------------------------
     # 자율 식단 모드
     # -------------------------
-
     else:
-
         user_food = st.text_area(
             "오늘 먹은 음식",
+
             height=120,
             placeholder="예) 불닭볶음면, 참치김밥, 콜라"
         )
