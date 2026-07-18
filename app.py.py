@@ -680,3 +680,454 @@ if mode == "🏫 학교 급식":
             "균형을 맞출 수 있습니다."
         )
 
+# ============================================================
+# PART 6 : 식단 기록 저장 + 주간 리포트
+# ============================================================
+
+
+# 기록 저장 공간 생성
+
+if "diet_history" not in st.session_state:
+
+    st.session_state.diet_history = []
+
+
+
+# ============================================================
+# 자율 식단 기록 저장
+# ============================================================
+
+
+if mode == "🏠 자율 식단":
+
+
+    if analyze_btn and user_food.strip() != "":
+
+
+        today = datetime.date.today()
+
+
+
+        record = {
+
+            "날짜": str(today),
+
+            "음식": user_food,
+
+            "칼로리": total["calorie"],
+
+            "탄수화물": total["탄수화물"],
+
+            "단백질": total["단백질"],
+
+            "지방": total["지방"],
+
+            "점수": score
+
+        }
+
+
+
+        st.session_state.diet_history.append(
+            record
+        )
+
+
+
+# ============================================================
+# 기록 출력
+# ============================================================
+
+
+st.markdown("---")
+
+st.header(
+    "📅 식단 기록 & 주간 리포트"
+)
+
+
+
+if len(st.session_state.diet_history) > 0:
+
+
+
+    history_df = pd.DataFrame(
+        st.session_state.diet_history
+    )
+
+
+
+    st.subheader(
+        "📋 최근 식단 기록"
+    )
+
+
+    st.dataframe(
+        history_df,
+        use_container_width=True
+    )
+
+
+
+    # 평균 계산
+
+
+    avg_score = history_df["점수"].mean()
+
+    avg_calorie = history_df["칼로리"].mean()
+
+
+
+    col1, col2 = st.columns(2)
+
+
+
+    with col1:
+
+        st.metric(
+
+            "평균 Health Score",
+
+            f"{avg_score:.1f}점"
+
+        )
+
+
+
+    with col2:
+
+        st.metric(
+
+            "평균 섭취 칼로리",
+
+            f"{avg_calorie:.0f} kcal"
+
+        )
+
+
+
+    # 그래프
+
+
+    st.subheader(
+        "📊 나의 건강 변화"
+    )
+
+
+    fig = px.line(
+
+        history_df,
+
+        x="날짜",
+
+        y="점수",
+
+        markers=True,
+
+        title="Health Score 변화"
+
+    )
+
+
+    fig.update_layout(
+        height=400
+    )
+
+
+    st.plotly_chart(
+
+        fig,
+
+        use_container_width=True
+
+    )
+
+
+
+    # 건강 평가
+
+
+    st.subheader(
+        "🤖 AI 주간 평가"
+    )
+
+
+
+    if avg_score >=90:
+
+
+        st.success(
+            """
+이번 주 식단은 매우 균형적입니다.
+
+현재 식습관을 유지하세요.
+"""
+        )
+
+
+    elif avg_score >=75:
+
+
+        st.info(
+            """
+좋은 식단입니다.
+
+부족한 영양소를 조금 보완하면 더 좋아집니다.
+"""
+        )
+
+
+    else:
+
+
+        st.warning(
+            """
+영양 균형 개선이 필요합니다.
+
+단백질과 채소 섭취를 늘려보세요.
+"""
+        )
+
+
+
+else:
+
+
+    st.info(
+        "아직 저장된 식단 기록이 없습니다."
+    )
+# ============================================================
+# PART 6 : 식단 기록 저장 + 주간 리포트 (수정 버전)
+# ============================================================
+
+
+# 기록 저장 공간 생성
+
+if "diet_history" not in st.session_state:
+
+    st.session_state.diet_history = []
+
+
+# ============================================================
+# 분석 결과 저장
+# ============================================================
+
+
+if mode == "🏠 자율 식단":
+
+
+    if analyze_btn and user_food.strip() != "":
+
+
+        # PART 5 결과 가져오기
+
+        if "diet_result" in st.session_state:
+
+
+            result = st.session_state.diet_result
+
+
+            today = datetime.date.today()
+
+
+            record = {
+
+                "날짜": str(today),
+
+                "음식": user_food,
+
+                "칼로리(kcal)": result["calorie"],
+
+                "탄수화물(g)": result["탄수화물"],
+
+                "단백질(g)": result["단백질"],
+
+                "지방(g)": result["지방"],
+
+                "Health Score": result["score"]
+
+            }
+
+
+            # 같은 날 같은 음식 중복 방지
+
+            exists = False
+
+
+            for item in st.session_state.diet_history:
+
+
+                if (
+                    item["날짜"] == str(today)
+                    and item["음식"] == user_food
+                ):
+
+                    exists = True
+
+
+
+            if exists == False:
+
+                st.session_state.diet_history.append(record)
+
+
+
+# ============================================================
+# 식단 기록 화면
+# ============================================================
+
+
+st.markdown("---")
+
+st.header(
+    "📅 식단 기록 & 주간 건강 리포트"
+)
+
+
+
+if len(st.session_state.diet_history) > 0:
+
+
+
+    history_df = pd.DataFrame(
+        st.session_state.diet_history
+    )
+
+
+    st.subheader(
+        "📋 나의 식단 기록"
+    )
+
+
+    st.dataframe(
+
+        history_df,
+
+        use_container_width=True
+
+    )
+
+
+
+    avg_score = history_df["Health Score"].mean()
+
+
+    avg_calorie = history_df["칼로리(kcal)"].mean()
+
+
+
+    col1, col2 = st.columns(2)
+
+
+
+    with col1:
+
+        st.metric(
+
+            "평균 Health Score",
+
+            f"{avg_score:.1f}점"
+
+        )
+
+
+
+    with col2:
+
+        st.metric(
+
+            "평균 칼로리",
+
+            f"{avg_calorie:.0f} kcal"
+
+        )
+
+
+
+    # 점수 변화 그래프
+
+
+    st.subheader(
+        "📈 건강 점수 변화"
+    )
+
+
+    fig = px.line(
+
+        history_df,
+
+        x="날짜",
+
+        y="Health Score",
+
+        markers=True,
+
+        title="나의 Health Score 기록"
+
+    )
+
+
+    fig.update_layout(
+
+        height=400
+
+    )
+
+
+    st.plotly_chart(
+
+        fig,
+
+        use_container_width=True
+
+    )
+
+
+
+    # AI 평가
+
+
+    st.subheader(
+        "🤖 AI 주간 평가"
+    )
+
+
+    if avg_score >= 90:
+
+
+        st.success(
+
+            "🎉 매우 좋은 식습관입니다. 현재 균형을 유지하세요."
+
+        )
+
+
+    elif avg_score >= 75:
+
+
+        st.info(
+
+            "👍 좋은 식단입니다. 부족한 영양소만 보완하면 됩니다."
+
+        )
+
+
+    else:
+
+
+        st.warning(
+
+            "⚠️ 영양 균형 개선이 필요합니다. 단백질과 채소 섭취를 늘려보세요."
+
+        )
+
+
+
+else:
+
+
+    st.info(
+
+        "아직 저장된 식단 기록이 없습니다."
+
+    )
